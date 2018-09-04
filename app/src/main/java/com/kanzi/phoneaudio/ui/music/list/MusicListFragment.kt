@@ -21,10 +21,10 @@ class MusicListFragment: BaseFragment(), MusicListView {
 
     override fun getLayoutResId() = R.layout.music_list_layout
 
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         fragmentComponent?.inject(this)
         presenter.bind(this, mRootView!!.context)
-        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onResume() {

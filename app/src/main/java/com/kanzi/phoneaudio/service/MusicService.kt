@@ -22,7 +22,7 @@ class MusicService : Service(),
         val TAG = MusicService::class.java.simpleName
     }
 
-    var player: MediaPlayer? = null
+    lateinit var player: MediaPlayer
     var songs: ArrayList<Song>? = null
     var songPosition: Int = 0
 
@@ -35,11 +35,11 @@ class MusicService : Service(),
     }
 
     private fun initMusicPlayer() {
-        player!!.setWakeMode(applicationContext, PowerManager.PARTIAL_WAKE_LOCK)
-        player!!.setAudioStreamType(AudioManager.STREAM_MUSIC)
-        player!!.setOnPreparedListener(this)
-        player!!.setOnCompletionListener(this)
-        player!!.setOnErrorListener(this)
+        player.setWakeMode(applicationContext, PowerManager.PARTIAL_WAKE_LOCK)
+        player.setAudioStreamType(AudioManager.STREAM_MUSIC)
+        player.setOnPreparedListener(this)
+        player.setOnCompletionListener(this)
+        player.setOnErrorListener(this)
     }
 
     public fun setMusicList(songs: ArrayList<Song>) {
@@ -52,13 +52,13 @@ class MusicService : Service(),
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
-        player!!.stop()
-        player!!.release()
+        player.stop()
+        player.release()
         return false
     }
 
     public fun playSong() {
-        player!!.reset()
+        player.reset()
         val playSong: Song = songs!!.get(songPosition)
         val currentSong = playSong.id
         val trackUri = ContentUris.withAppendedId(
@@ -66,12 +66,12 @@ class MusicService : Service(),
                 currentSong)
 
         try {
-            player!!.setDataSource(applicationContext, trackUri)
+            player.setDataSource(applicationContext, trackUri)
         } catch (e: Exception) {
             Log.e(TAG, "Error setting data source", e)
         }
 
-        player!!.prepareAsync()
+        player.prepareAsync()
     }
 
     public fun setSong(songIndex: Int) {

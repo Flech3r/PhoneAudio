@@ -17,8 +17,8 @@ import com.kanzi.phoneaudio.data.model.Song
 
 class MainActivity : AppCompatActivity(), MediaController.MediaPlayerControl {
 
-    private var controller: MusicController? = null
-    private var musicService: MusicService? = null
+    private lateinit var controller: MusicController
+    private lateinit var musicService: MusicService
     private var playIntent: Intent? = null
     private var musicBound: Boolean = false
 
@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity(), MediaController.MediaPlayerControl {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         openFragment()
-        setController()
+        initController()
     }
 
 
@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity(), MediaController.MediaPlayerControl {
             //get service
             musicService = binder.service
             //pass list
-            musicService!!.setMusicList(ArrayList<Song>())//damust
+            musicService.setMusicList(ArrayList<Song>())//damust
             musicBound = true
         }
 
@@ -54,11 +54,11 @@ class MainActivity : AppCompatActivity(), MediaController.MediaPlayerControl {
                 .commit()
     }
 
-    fun setController() {
+    fun initController() {
         controller = MusicController(this)
-        controller!!.setMediaPlayer(this)
-        controller!!.setAnchorView(findViewById(R.id.music_list))
-        controller!!.isEnabled = true
+        controller.setMediaPlayer(this)
+        controller.setAnchorView(findViewById(R.id.music_list))
+        controller.isEnabled = true
 //        controller.setPrevNextListeners(View.OnClickListener {  })
     }
 

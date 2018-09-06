@@ -1,5 +1,7 @@
 package com.kanzi.phoneaudio.service
 
+import android.app.Notification
+import android.app.PendingIntent
 import android.app.Service
 import android.content.ContentUris
 import android.content.Intent
@@ -10,7 +12,9 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.provider.MediaStore
 import android.util.Log
+import com.kanzi.phoneaudio.R
 import com.kanzi.phoneaudio.data.model.Song
+import com.kanzi.phoneaudio.ui.MainActivity
 
 
 class MusicService : Service(),
@@ -23,8 +27,10 @@ class MusicService : Service(),
     }
 
     lateinit var player: MediaPlayer
-    var songs: ArrayList<Song>? = null
+    lateinit var songs: ArrayList<Song>
     var songPosition: Int = 0
+    private var songTitle = ""
+    private val NOTIFY_ID = 1
 
     private val musicBind = MusicBinder()
 
@@ -42,7 +48,7 @@ class MusicService : Service(),
         player.setOnErrorListener(this)
     }
 
-    public fun setMusicList(songs: ArrayList<Song>) {
+    fun setMusicList(songs: ArrayList<Song>) {
         this.songs = songs
 
     }
@@ -57,9 +63,10 @@ class MusicService : Service(),
         return false
     }
 
-    public fun playSong() {
+    fun playSong() {
         player.reset()
-        val playSong: Song = songs!!.get(songPosition)
+        val playSong: Song = songs.get(songPosition)
+        songTitle = playSong.title
         val currentSong = playSong.id
         val trackUri = ContentUris.withAppendedId(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -74,20 +81,84 @@ class MusicService : Service(),
         player.prepareAsync()
     }
 
-    public fun setSong(songIndex: Int) {
+    fun setSong(songIndex: Int) {
         songPosition = songIndex
     }
 
     override fun onPrepared(mp: MediaPlayer?) {
         mp!!.start()
+        initPlaybackWidget()
     }
 
     override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return false
     }
 
     override fun onCompletion(mp: MediaPlayer?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    fun getPosn(): Int {
+        return player.currentPosition
+    }
+
+    fun getDur(): Int {
+        return player.duration
+    }
+
+    fun isPng(): Boolean {
+        return player.isPlaying
+    }
+
+    fun pausePlayer() {
+        player.pause()
+    }
+
+    fun seek(posn: Int) {
+        player.seekTo(posn)
+    }
+
+    fun go() {
+        player.start()
+    }
+
+    fun playPrev() {
+        songPosition--;
+        if (songPosition < 0) {
+            songPosition = songs.size - 1
+        }
+        playSong()
+    }
+
+    fun playNext() {
+        songPosition++;
+        if (songPosition > songs.size) {
+            songPosition = 0
+        }
+        playSong()
+    }
+
+    private fun initPlaybackWidget() {
+        val notIntent = Intent(this, MainActivity::class.java)
+        notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val pendInt = PendingIntent.getActivity(this, 0,
+                notIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+        val builder: Notification.Builder = Notification.Builder(this)
+
+        builder.setContentIntent(pendInt)
+                .setSmallIcon(R.drawable.play)
+                .setTicker(songTitle)
+                .setOngoing(true)
+                .setContentTitle("Playing")
+        .setContentText(songTitle)
+        val not: Notification = builder.build();
+
+        startForeground(NOTIFY_ID, not);
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopForeground(true)
     }
 
     inner class MusicBinder : Binder() {

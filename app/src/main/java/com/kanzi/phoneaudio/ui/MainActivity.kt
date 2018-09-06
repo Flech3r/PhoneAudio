@@ -13,9 +13,16 @@ import android.content.ComponentName
 import android.content.Context
 import com.kanzi.phoneaudio.service.MusicService.MusicBinder
 import android.os.IBinder
+import android.util.Log
+import android.view.View
+import com.kanzi.phoneaudio.data.Container
 import com.kanzi.phoneaudio.data.model.Song
 
-class MainActivity : AppCompatActivity(), MediaController.MediaPlayerControl {
+class MainActivity : AppCompatActivity(), MediaController.MediaPlayerControl, MainActivityView {
+
+    companion object {
+        val TAG = MainActivity::class.java.simpleName
+    }
 
     private lateinit var controller: MusicController
     private lateinit var musicService: MusicService
@@ -30,7 +37,6 @@ class MainActivity : AppCompatActivity(), MediaController.MediaPlayerControl {
     }
 
 
-
     private val musicConnection = object : ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
@@ -38,7 +44,7 @@ class MainActivity : AppCompatActivity(), MediaController.MediaPlayerControl {
             //get service
             musicService = binder.service
             //pass list
-            musicService.setMusicList(ArrayList<Song>())//damust
+            musicService.setMusicList(Container.songList)
             musicBound = true
         }
 
@@ -50,69 +56,107 @@ class MainActivity : AppCompatActivity(), MediaController.MediaPlayerControl {
     fun openFragment() {
         fragmentManager
                 .beginTransaction()
-                .replace(R.id.container, MusicListFragment(), "")
+                .replace(R.id.container, MusicListFragment(this), "")
                 .commit()
     }
 
     fun initController() {
         controller = MusicController(this)
+        controller.setPrevNextListeners({ playNext() }, { playPrev() })
         controller.setMediaPlayer(this)
         controller.setAnchorView(findViewById(R.id.music_list))
         controller.isEnabled = true
-//        controller.setPrevNextListeners(View.OnClickListener {  })
+
     }
 
     override fun onStart() {
         super.onStart()
         if (playIntent == null) {
+            Log.i(TAG, "initing")
             playIntent = Intent(this, MusicService::class.java)
             bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE)
             startService(playIntent)
         }
     }
 
+    override fun songPicked(position: Int) {
+        Log.i(TAG, "wokring")
+        if (musicBound) {
+            musicService.setSong(position)
+            musicService.playSong()
+        }
+
+    }
+
+    private fun playNext() {
+        musicService.playNext()
+        controller.show(0)
+    }
+
+    private fun playPrev() {
+        musicService.playPrev()
+        controller.show(0)
+    }
+
     override fun isPlaying(): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        if (musicService != null && musicBound) {
+            return musicService.isPng()
+        } else {
+            return false
+        }
     }
 
     override fun canSeekForward(): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return true
     }
 
     override fun getDuration(): Int {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        if (musicService != null && musicBound && musicService.isPng()) {
+            return musicService.getDur()
+        } else {
+            return 0
+        }
     }
 
     override fun pause() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        musicService.pausePlayer()
     }
 
     override fun getBufferPercentage(): Int {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return 0
     }
 
     override fun seekTo(pos: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        musicService.seek(pos)
     }
 
     override fun getCurrentPosition(): Int {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+        if (musicService != null && musicBound && musicService.isPng()) {
+            return musicService.getPosn()
+        } else {
+            return 0
+        }
     }
 
     override fun canSeekBackward(): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return true
     }
 
     override fun start() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        musicService.go()
     }
 
     override fun getAudioSessionId(): Int {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return 0
     }
 
     override fun canPause(): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return true
     }
 
+    override fun onDestroy() {
+        stopService(playIntent)
+        super.onDestroy()
+    }
 }

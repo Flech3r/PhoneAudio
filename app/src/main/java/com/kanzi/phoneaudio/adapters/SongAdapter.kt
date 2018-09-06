@@ -10,9 +10,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.kanzi.phoneaudio.R
 import com.kanzi.phoneaudio.data.model.Song
+import com.kanzi.phoneaudio.ui.MainActivityView
 
 class SongAdapter(private val songs: ArrayList<Song>,
-                  cotext: Context): BaseAdapter() {
+                  cotext: Context,
+                  private val view: MainActivityView): BaseAdapter() {
 
     companion object {
         val TAG = SongAdapter::class.java.simpleName
@@ -26,7 +28,6 @@ class SongAdapter(private val songs: ArrayList<Song>,
                 parent,
                 false
         ) as LinearLayout
-
         val songView: TextView =  songLayout.findViewById(R.id.song_title) as TextView
         val artistView: TextView = songLayout.findViewById(R.id.song_artist) as TextView
 
@@ -43,6 +44,7 @@ class SongAdapter(private val songs: ArrayList<Song>,
     }
 
     override fun getItemId(position: Int): Long {
+        view.songPicked(position)
         return 0
     }
 
